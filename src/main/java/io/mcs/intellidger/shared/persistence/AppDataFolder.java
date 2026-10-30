@@ -1,4 +1,4 @@
-package io.mcs.intellidger.desktop;
+package io.mcs.intellidger.shared.persistence;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

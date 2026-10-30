@@ -1,7 +1,7 @@
-package io.mcs.intellidger.desktop;
+package io.mcs.intellidger.ui;
 
 import io.mcs.intellidger.IntellidgerApplication;
-import io.mcs.intellidger.controllers.MainWindowController;
+import io.mcs.intellidger.shared.persistence.AppDataFolder;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;

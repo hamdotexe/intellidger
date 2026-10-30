@@ -1,4 +1,4 @@
-package io.mcs.intellidger.controllers;
+package io.mcs.intellidger.ui;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;

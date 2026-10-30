@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.BorderPane?>
 
 <BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="io.mcs.intellidger.controllers.MainWindowController">
+            fx:controller="io.mcs.intellidger.ui.MainWindowController">
     <center>
         <Label text="Intellidger"/>
     </center>

@@ -1,6 +1,6 @@
 package io.mcs.intellidger;
 
-import io.mcs.intellidger.desktop.DesktopApp;
+import io.mcs.intellidger.ui.DesktopApp;
 import javafx.application.Application;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
