@@ -22,6 +22,8 @@ project for Software Construction (BESE-30, MCS NUST).
   repositories.
 - `services/`, `repositories/`, `entities/`: by area. Each package's `package-info` says what it holds.
 - `shared/persistence/`: `AppDataFolder`, where the database lives.
+- `shared/audit/`: `RevisionInfo`, Envers' revision table. Entities are `@Audited`, and each audited table gets a
+  `*_aud` twin in the same migration.
 
 ## Entities
 
@@ -31,13 +33,17 @@ superclass:
 ```java
 @Id
 @GeneratedValue(strategy = GenerationType.UUID)
+@Setter(AccessLevel.NONE)
 private UUID id;
 
 /** Null on a new row on purpose: Spring Data takes a set version to mean "already saved". */
 @Version
 @Column(name = "jpa_version", nullable = false)
+@Setter(AccessLevel.NONE)
 private Long jpaVersion;
 ```
+
+Entities use Lombok `@Getter @Setter` on the class, so `@Setter(AccessLevel.NONE)` keeps these two read-only.
 
 The only exception is one JPA forces: in an `@Inheritance(strategy = JOINED)` hierarchy, the subclasses get the id
 and version from the root entity, which declares them. A `@MappedSuperclass` never carries them; each entity that
