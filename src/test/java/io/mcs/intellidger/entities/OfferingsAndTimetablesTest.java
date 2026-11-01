@@ -65,6 +65,7 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
             assertThat(theory.getInstructors()).hasSize(2);
             assertThat(theory.getInstructors().get(0).getTeacher().getName()).startsWith("Lt Col Khawir");
             assertThat(theory.getInstructors().get(1).getPriority()).isEqualTo(1);
+            assertThat(theory.getInstructorPreferenceWeight()).isEqualTo(2);
             assertThat(theory.isOnlyListedRooms()).isFalse();
             assertThat(theory.getImpossibleRooms()).hasSize(1);
             assertThat(theory.getImpossibleRooms().iterator().next().getName()).startsWith("CR-35");
@@ -74,6 +75,7 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
             assertThat(lab.getSessionLengthsInPeriods()).containsExactly(3);
             assertThat(lab.getInstructors().get(0).getTeacher().getName()).startsWith("Dr Rabia Khan");
             assertThat(lab.getLabEngineers().get(0).getTeacher().getName()).startsWith("LE Shehla Farooq");
+            assertThat(lab.getLabEngineerPreferenceWeight()).isEqualTo(1);
             assertThat(lab.isOnlyListedRooms()).isTrue();
             assertThat(lab.getRooms().get(0).getRoom().getName()).startsWith("Programming Lab");
             assertThat(lab.getRooms().get(0).getRoom().getMaxSectionsAtOnce()).isEqualTo(1);
@@ -93,6 +95,8 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
             again.setSection(theory.getSection());
             again.getSessionLengthsInPeriods().add(3);
             again.getInstructors().add(instructor(theory.getInstructors().get(0).getTeacher(), 1));
+            again.setInstructorPreferenceWeight(0);
+            again.setRoomPreferenceWeight(0);
             entityManager.persist(again);
         })).hasMessageContaining("UNIQUE constraint failed: offerings.term_id, offerings.course_id");
     }
@@ -177,6 +181,8 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
         theory.getInstructors().add(instructor(teacher("Lt Col Khawir", termName), 1));
         theory.getInstructors().add(instructor(teacher("Dr Abdul Razzaq", termName), 1));
         theory.getImpossibleRooms().add(room("CR-35", termName));
+        theory.setInstructorPreferenceWeight(2);
+        theory.setRoomPreferenceWeight(0);
 
         LabOffering lab = new LabOffering();
         lab.getSessionLengthsInPeriods().add(3);
@@ -187,6 +193,9 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
         programmingLab.setPriority(1);
         lab.getRooms().add(programmingLab);
         lab.setOnlyListedRooms(true);
+        lab.setInstructorPreferenceWeight(0);
+        lab.setRoomPreferenceWeight(0);
+        lab.setLabEngineerPreferenceWeight(1);
 
         for (Offering offering : List.of(theory, lab)) {
             offering.setTerm(term);

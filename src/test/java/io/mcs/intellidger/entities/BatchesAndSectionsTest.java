@@ -63,6 +63,8 @@ class BatchesAndSectionsTest extends DatabaseTestBase {
                 instructor.setTeacher(teacher);
                 instructor.setPriority(1);
                 theory.getInstructors().add(instructor);
+                theory.setInstructorPreferenceWeight(0);
+                theory.setRoomPreferenceWeight(0);
                 entityManager.persist(theory);
             }
             elective(term, batch, "Quantum-1");
