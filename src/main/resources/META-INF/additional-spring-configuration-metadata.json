@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "timefold.solver.termination.spent-limit",
+      "type": "java.time.Duration",
+      "description": "The longest a run lasts before it stops and its best timetable is judged."
+    },
+    {
+      "name": "timefold.solver.termination.unimproved-spent-limit",
+      "type": "java.time.Duration",
+      "description": "How long a run goes on without finding a better timetable before it stops early."
+    },
+    {
+      "name": "timefold.solver-manager.parallel-solver-count",
+      "type": "java.lang.String",
+      "description": "How many runs may solve at once: a number, or AUTO for half the processors."
+    }
+  ]
+}
