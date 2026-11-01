@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,4 +37,20 @@ public class Term {
     @NotBlank
     @Column(name = "name", nullable = false)
     private String name;
+
+    /**
+     * A term preference, set for every term: whether a lab's instructor must be free for its whole session, beside
+     * its lab engineer. When false, only the lab engineer must be; the instructor may teach elsewhere meanwhile.
+     */
+    @NotNull
+    @Column(name = "instructors_attend_labs", nullable = false)
+    private Boolean instructorsAttendLabs;
+
+    /**
+     * A term preference, set for every term: whether each student takes just one of their batch's electives. When
+     * true, sections of different electives may meet at the same time; when false, they never do.
+     */
+    @NotNull
+    @Column(name = "electives_mutually_exclusive", nullable = false)
+    private Boolean electivesMutuallyExclusive;
 }
