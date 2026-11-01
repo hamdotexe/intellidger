@@ -3,6 +3,7 @@ package io.mcs.intellidger.timefold.offerings;
 import io.mcs.intellidger.timefold.courses.Course;
 import io.mcs.intellidger.timefold.rooms.Room;
 import io.mcs.intellidger.timefold.sections.Section;
+import io.mcs.intellidger.timefold.teachers.Teacher;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -44,4 +45,37 @@ public abstract class Offering {
 
     /** "Only these rooms": no room but the listed ones. */
     private final boolean onlyListedRooms;
+
+    /** What its instructor costs: its instructor weight for each step the teacher stands below the first. */
+    public int instructorCost(Teacher teacher) {
+        return instructorPreferenceWeight * stepsDown(instructors, teacher);
+    }
+
+    /** What a session's room costs: its room weight for each step below the first, an unlisted room below the last. */
+    public int roomCost(Room room) {
+        var own = rooms.stream()
+                .filter(listed -> listed.getRoom().equals(room))
+                .mapToInt(listed -> listed.getPriority())
+                .min();
+        long steps = rooms.stream()
+                .mapToInt(listed -> listed.getPriority())
+                .filter(priority -> own.isEmpty() || priority < own.getAsInt())
+                .distinct()
+                .count();
+        return roomPreferenceWeight * (int) steps;
+    }
+
+    /** How many priorities among these come before the teacher's: 0 for one of the first. */
+    static int stepsDown(List<InstructorPriority> listed, Teacher teacher) {
+        int own = listed.stream()
+                .filter(entry -> entry.getTeacher().equals(teacher))
+                .mapToInt(entry -> entry.getPriority())
+                .min()
+                .orElseThrow();
+        return (int) listed.stream()
+                .mapToInt(entry -> entry.getPriority())
+                .filter(priority -> priority < own)
+                .distinct()
+                .count();
+    }
 }

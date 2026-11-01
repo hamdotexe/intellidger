@@ -1,7 +1,12 @@
 package io.mcs.intellidger.timefold.preferences.teachers;
 
+import ai.timefold.solver.core.api.score.HardSoftScore;
+import ai.timefold.solver.core.api.score.stream.Constraint;
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
+import ai.timefold.solver.core.api.score.stream.Joiners;
 import io.mcs.intellidger.repositories.preferences.teachers.TeacherMinDailyLoadRepository;
 import io.mcs.intellidger.timefold.teachers.Teacher;
+import io.mcs.intellidger.timefold.timetables.Session;
 import io.mcs.intellidger.timefold.timetables.Timetable;
 import lombok.Getter;
 
@@ -28,5 +33,24 @@ public class TeacherMinDailyLoad extends TeacherPreference {
                 .map(preference -> new TeacherMinDailyLoad(timetable.teacher(preference.getTeacher().getId()),
                         preference.getWeight(), Map.copyOf(preference.getMinPeriodsPerDay())))
                 .toList();
+    }
+
+    /** How many periods these sessions fall short of its minimums, on each day it lists. */
+    public int missedBy(List<Session> sessions) {
+        var loads = Session.periodsByDay(sessions);
+        return minPeriodsPerDay.entrySet().stream()
+                .mapToInt(entry -> Math.max(0, entry.getValue() - loads.getOrDefault(entry.getKey(), 0)))
+                .sum();
+    }
+
+    /** A teacher under their fewest periods on a day: soft, the weight for each period short. */
+    public static Constraint missed(ConstraintFactory factory) {
+        return Teacher.weeksTaught(factory)
+                .join(TeacherMinDailyLoad.class,
+                        Joiners.equal((teacher, sessions) -> teacher, preference -> preference.getTeacher()))
+                .filter((teacher, sessions, preference) -> preference.missedBy(sessions) > 0)
+                .penalize(HardSoftScore.ONE_SOFT,
+                        (teacher, sessions, preference) -> preference.getWeight() * preference.missedBy(sessions))
+                .asConstraint("Teacher under their daily minimum");
     }
 }

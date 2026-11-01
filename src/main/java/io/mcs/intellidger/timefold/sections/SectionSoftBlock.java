@@ -1,5 +1,9 @@
 package io.mcs.intellidger.timefold.sections;
 
+import ai.timefold.solver.core.api.score.HardSoftScore;
+import ai.timefold.solver.core.api.score.stream.Constraint;
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
+import ai.timefold.solver.core.api.score.stream.Joiners;
 import io.mcs.intellidger.repositories.sections.SectionSoftBlockRepository;
 import io.mcs.intellidger.timefold.timetables.Timetable;
 import io.mcs.intellidger.timefold.weekplan.Period;
@@ -26,5 +30,18 @@ public class SectionSoftBlock extends SectionBlock {
                 .map(block -> new SectionSoftBlock(timetable.period(block.getPeriod().getId()),
                         timetable.section(block.getSection().getId()), block.getWeight()))
                 .toList();
+    }
+
+    /**
+     * A section at a session in its soft block, a regular section's keeping its batch's elective sections out too:
+     * soft, at its weight.
+     */
+    public static Constraint used(ConstraintFactory factory) {
+        return Section.sessionsAttended(factory)
+                .join(SectionSoftBlock.class,
+                        Joiners.equal((section, session) -> section, block -> block.getSection()),
+                        Joiners.filtering((section, session, block) -> session.covers(block.getPeriod())))
+                .penalize(HardSoftScore.ONE_SOFT, (section, session, block) -> block.getWeight())
+                .asConstraint("Section at a session in its soft block");
     }
 }

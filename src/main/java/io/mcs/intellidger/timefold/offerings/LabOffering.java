@@ -4,6 +4,7 @@ import io.mcs.intellidger.repositories.offerings.LabOfferingRepository;
 import io.mcs.intellidger.timefold.courses.Course;
 import io.mcs.intellidger.timefold.rooms.Room;
 import io.mcs.intellidger.timefold.sections.Section;
+import io.mcs.intellidger.timefold.teachers.Teacher;
 import io.mcs.intellidger.timefold.timetables.Timetable;
 import lombok.Getter;
 
@@ -62,5 +63,10 @@ public class LabOffering extends Offering {
                                 .toList(),
                         offering.getLabEngineerPreferenceWeight()))
                 .toList();
+    }
+
+    /** What its lab engineer costs: its lab engineer weight for each step the teacher stands below the first. */
+    public int labEngineerCost(Teacher teacher) {
+        return labEngineerPreferenceWeight * stepsDown(labEngineers, teacher);
     }
 }

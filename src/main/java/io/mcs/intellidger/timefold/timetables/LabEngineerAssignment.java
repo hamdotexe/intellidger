@@ -4,6 +4,9 @@ import ai.timefold.solver.core.api.domain.common.PlanningId;
 import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.valuerange.ValueRangeProvider;
 import ai.timefold.solver.core.api.domain.variable.PlanningVariable;
+import ai.timefold.solver.core.api.score.HardSoftScore;
+import ai.timefold.solver.core.api.score.stream.Constraint;
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import io.mcs.intellidger.repositories.timetables.TimetableDraftRepository;
 import io.mcs.intellidger.timefold.offerings.LabOffering;
 import io.mcs.intellidger.timefold.teachers.Teacher;
@@ -62,5 +65,14 @@ public class LabEngineerAssignment {
                     return assignment;
                 })
                 .toList();
+    }
+
+    /** A lab engineer below the lab's first priority: soft, the lab's lab engineer weight for each step. */
+    public static Constraint belowFirst(ConstraintFactory factory) {
+        return factory.forEach(LabEngineerAssignment.class)
+                .filter(assignment -> assignment.getOffering().labEngineerCost(assignment.getTeacher()) > 0)
+                .penalize(HardSoftScore.ONE_SOFT,
+                        assignment -> assignment.getOffering().labEngineerCost(assignment.getTeacher()))
+                .asConstraint("Lab engineer below the first priority");
     }
 }

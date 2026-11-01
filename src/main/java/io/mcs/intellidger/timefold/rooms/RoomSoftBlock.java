@@ -1,6 +1,11 @@
 package io.mcs.intellidger.timefold.rooms;
 
+import ai.timefold.solver.core.api.score.HardSoftScore;
+import ai.timefold.solver.core.api.score.stream.Constraint;
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
+import ai.timefold.solver.core.api.score.stream.Joiners;
 import io.mcs.intellidger.repositories.rooms.RoomSoftBlockRepository;
+import io.mcs.intellidger.timefold.timetables.Session;
 import io.mcs.intellidger.timefold.timetables.Timetable;
 import io.mcs.intellidger.timefold.weekplan.Period;
 import lombok.Getter;
@@ -26,5 +31,15 @@ public class RoomSoftBlock extends RoomBlock {
                 .map(block -> new RoomSoftBlock(timetable.period(block.getPeriod().getId()),
                         timetable.room(block.getRoom().getId()), block.getWeight()))
                 .toList();
+    }
+
+    /** A session in its room's soft block: soft, at its weight. */
+    public static Constraint used(ConstraintFactory factory) {
+        return factory.forEach(Session.class)
+                .join(RoomSoftBlock.class,
+                        Joiners.equal(session -> session.getRoom(), block -> block.getRoom()),
+                        Joiners.filtering((session, block) -> session.covers(block.getPeriod())))
+                .penalize(HardSoftScore.ONE_SOFT, (session, block) -> block.getWeight())
+                .asConstraint("Room used in its soft block");
     }
 }

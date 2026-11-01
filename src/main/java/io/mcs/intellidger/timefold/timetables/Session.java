@@ -5,6 +5,9 @@ import ai.timefold.solver.core.api.domain.entity.PlanningEntity;
 import ai.timefold.solver.core.api.domain.entity.PlanningPin;
 import ai.timefold.solver.core.api.domain.valuerange.ValueRangeProvider;
 import ai.timefold.solver.core.api.domain.variable.PlanningVariable;
+import ai.timefold.solver.core.api.score.HardSoftScore;
+import ai.timefold.solver.core.api.score.stream.Constraint;
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import io.mcs.intellidger.repositories.timetables.TimetableDraftRepository;
 import io.mcs.intellidger.timefold.offerings.Offering;
 import io.mcs.intellidger.timefold.rooms.Room;
@@ -18,7 +21,9 @@ import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -134,5 +139,38 @@ public class Session {
         int sharedFrom = Math.max(getFirstPeriodNumber(), other.getFirstPeriodNumber());
         int sharedUntil = Math.min(getEndPeriodNumber(), other.getEndPeriodNumber());
         return Math.max(0, sharedUntil - sharedFrom);
+    }
+
+    /** Whether the period is one of its own: on its day, from its first period to its last. */
+    public boolean covers(Period period) {
+        return period.getDay() == getDay() && period.getNumber() >= getFirstPeriodNumber()
+                && period.getNumber() < getEndPeriodNumber();
+    }
+
+    /** How many periods these sessions last on each day, a day with none left out. */
+    public static Map<DayOfWeek, Integer> periodsByDay(Collection<Session> sessions) {
+        return sessions.stream()
+                .collect(Collectors.groupingBy(session -> session.getDay(),
+                        Collectors.summingInt(session -> session.getLengthInPeriods())));
+    }
+
+    /**
+     * A session where it may not be: starting where the whole session doesn't fit, or in a room its offering rules
+     * out. Only one placed from the draft can be, its offering or week plan changed since: hard.
+     */
+    public static Constraint impossiblePlacement(ConstraintFactory factory) {
+        return factory.forEach(Session.class)
+                .filter(session -> !session.getPossibleStartPeriods().contains(session.getStartPeriod())
+                        || !session.getPossibleRooms().contains(session.getRoom()))
+                .penalize(HardSoftScore.ONE_HARD)
+                .asConstraint("Session placed where it may not be");
+    }
+
+    /** A session's room below its offering's first priority: soft, the offering's room weight for each step. */
+    public static Constraint roomBelowFirst(ConstraintFactory factory) {
+        return factory.forEach(Session.class)
+                .filter(session -> session.getOffering().roomCost(session.getRoom()) > 0)
+                .penalize(HardSoftScore.ONE_SOFT, session -> session.getOffering().roomCost(session.getRoom()))
+                .asConstraint("Session's room below the first priority");
     }
 }

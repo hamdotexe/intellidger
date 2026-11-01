@@ -1,5 +1,9 @@
 package io.mcs.intellidger.timefold.teachers;
 
+import ai.timefold.solver.core.api.score.HardSoftScore;
+import ai.timefold.solver.core.api.score.stream.Constraint;
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
+import ai.timefold.solver.core.api.score.stream.Joiners;
 import io.mcs.intellidger.repositories.teachers.TeacherSoftBlockRepository;
 import io.mcs.intellidger.timefold.timetables.Timetable;
 import io.mcs.intellidger.timefold.weekplan.Period;
@@ -26,5 +30,15 @@ public class TeacherSoftBlock extends TeacherBlock {
                 .map(block -> new TeacherSoftBlock(timetable.period(block.getPeriod().getId()),
                         timetable.teacher(block.getTeacher().getId()), block.getWeight()))
                 .toList();
+    }
+
+    /** A teacher at a session in their soft block: soft, at its weight. */
+    public static Constraint used(ConstraintFactory factory) {
+        return Teacher.sessionsAttended(factory)
+                .join(TeacherSoftBlock.class,
+                        Joiners.equal((teacher, session) -> teacher, block -> block.getTeacher()),
+                        Joiners.filtering((teacher, session, block) -> session.covers(block.getPeriod())))
+                .penalize(HardSoftScore.ONE_SOFT, (teacher, session, block) -> block.getWeight())
+                .asConstraint("Teacher at a session in their soft block");
     }
 }
