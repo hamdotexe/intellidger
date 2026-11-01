@@ -3,6 +3,6 @@
  * is one row with its owner, its term and its own weight, and each kind of wish is its own class. A timetable pays the
  * weight for each period or day it misses a wish by. There are no global weights.
  * <p>
- * A section's wishes are in {@code sections}, a teacher's in {@code teachers}; the load range both use is here.
+ * A section's wishes are in {@code sections}, a teacher's in {@code teachers}.
  */
 package io.mcs.intellidger.entities.preferences;
