@@ -26,7 +26,9 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -83,8 +85,9 @@ public abstract class Offering {
     private List<@Positive Integer> sessionLengthsInPeriods = new ArrayList<>();
 
     /**
-     * Who may teach it, by priority: 1 first, the same number for equal choices. A teacher not listed may not. Kept in
-     * the order entered, which also gives each its own row in the audit history.
+     * Who may teach it, by priority: 1 first, the same number for equal choices. Mandatory and always in force: only
+     * the teachers listed here can ever teach it, and a teacher not listed never can. Kept in the order entered, which
+     * also gives each its own row in the audit history.
      */
     @NotEmpty
     @ElementCollection
@@ -92,11 +95,33 @@ public abstract class Offering {
     @OrderColumn(name = "position")
     private List<@Valid InstructorPriority> instructors = new ArrayList<>();
 
-    /** The rooms it would like, by priority as for instructors. A room not listed comes after every listed one. */
+    /**
+     * How much its instructor's priority matters: what a timetable pays for each step the instructor it gets stands
+     * below the first priority. 0 when any listed instructor will do as well as another.
+     */
+    @NotNull
+    @PositiveOrZero
+    @Column(name = "instructor_preference_weight", nullable = false)
+    private Integer instructorPreferenceWeight;
+
+    /**
+     * The rooms it would like, by priority as for instructors. Unlike instructors, listing rooms doesn't limit it to
+     * them: a room not listed comes after every listed one, and is ruled out only when "only these rooms" is on.
+     */
     @ElementCollection
     @CollectionTable(name = "offering_rooms", joinColumns = @JoinColumn(name = "offering_id"))
     @OrderColumn(name = "position")
     private List<@Valid RoomPriority> rooms = new ArrayList<>();
+
+    /**
+     * How much its rooms' priorities matter: what a timetable pays, for each of its sessions, for each step the room
+     * stands below the first priority, a room not listed standing one below the last listed. 0 when any room it may
+     * use will do as well as another.
+     */
+    @NotNull
+    @PositiveOrZero
+    @Column(name = "room_preference_weight", nullable = false)
+    private Integer roomPreferenceWeight;
 
     /** Rooms it may never use. */
     @ManyToMany

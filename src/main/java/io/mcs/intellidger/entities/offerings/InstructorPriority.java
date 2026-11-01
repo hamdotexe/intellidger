@@ -12,7 +12,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** A teacher who may teach an offering, and how much they are wanted: 1 first, equal numbers equally. */
+/**
+ * A teacher who may teach an offering, or be a lab offering's lab engineer, and how much they are wanted: 1 first,
+ * equal numbers equally. Only teachers in the list can ever be given the offering; there is no switch to allow others.
+ */
 @Embeddable
 @Getter
 @Setter

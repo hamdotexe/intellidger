@@ -12,7 +12,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** A room an offering would like, and how much: 1 first, equal numbers equally. */
+/**
+ * A room an offering would like, and how much: 1 first, equal numbers equally. Being listed limits the offering to its
+ * listed rooms only when the offering's "only these rooms" is on.
+ */
 @Embeddable
 @Getter
 @Setter

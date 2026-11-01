@@ -1,6 +1,7 @@
 package io.mcs.intellidger.entities.offerings;
 
 import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
@@ -9,6 +10,8 @@ import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
@@ -29,10 +32,19 @@ import java.util.List;
 @Setter
 public class LabOffering extends Offering {
 
-    /** Who may be its lab engineer, by priority: 1 first, the same number for equal choices. */
+    /**
+     * Who may be its lab engineer, by priority: 1 first, the same number for equal choices. Mandatory and always in
+     * force, as for instructors: only the teachers listed here can ever be its lab engineer.
+     */
     @NotEmpty
     @ElementCollection
     @CollectionTable(name = "lab_offering_engineers", joinColumns = @JoinColumn(name = "offering_id"))
     @OrderColumn(name = "position")
     private List<@Valid InstructorPriority> labEngineers = new ArrayList<>();
+
+    /** How much its lab engineer's priority matters, as its instructor's does: what each step below the first costs. */
+    @NotNull
+    @PositiveOrZero
+    @Column(name = "lab_engineer_preference_weight", nullable = false)
+    private Integer labEngineerPreferenceWeight;
 }
