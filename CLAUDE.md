@@ -96,7 +96,8 @@ is written out. Each number's name also says what it counts: `maxPeriodsPerDay`,
   leaves foreign keys out, so the migration declares them inline.
 - **An audited `@ElementCollection` of embeddables needs an `@OrderColumn`.** Without one, Envers keys its audit rows
   by owner and revision only, and two elements saved together collide.
-- **Days of the week** that a row applies on are an `@ElementCollection` of `DayOfWeek`, stored by name in a
-  `<kind>_days` table of their own. Never pack them into one column with a converter.
+- **A value for each day of the week** (a time, a number of periods) is an `@ElementCollection` map keyed by
+  `DayOfWeek`, stored by name in a `<kind>_days` table with the day's value beside it; a day left out has none. Never
+  pack days into one column with a converter.
 - SQLite notes: UUIDs are stored as 36-character text, foreign keys are on, and the app uses one connection because
   SQLite allows one writer at a time.
