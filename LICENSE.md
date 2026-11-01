@@ -1,4 +1,4 @@
-Required Notice: Copyright (c) 2026 the Intellidger authors, BESE-30, MCS, National University of Science and Technology, PK (https://github.com/hamdotexe/intellidger)
+Required Notice: Copyright (c) 2026 the Intellidger authors, BESE-30, MCS, National University of Sciences and Technology, PK (https://github.com/hamdotexe/intellidger)
 
 # PolyForm Noncommercial License 1.0.0
 
