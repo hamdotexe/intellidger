@@ -25,6 +25,7 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,11 +56,13 @@ class PreferencesTest extends DatabaseTestBase {
             entityManager.persist(section);
 
             SectionOffBy offBy = new SectionOffBy();
-            offBy.setDays(EnumSet.of(DayOfWeek.THURSDAY, DayOfWeek.MONDAY));
-            offBy.setTime(LocalTime.of(13, 0));
+            offBy.getOffByPerDay().put(DayOfWeek.THURSDAY, LocalTime.of(13, 0));
+            offBy.getOffByPerDay().put(DayOfWeek.MONDAY, LocalTime.of(15, 0));
             SectionMinDailyLoad minDailyLoad = new SectionMinDailyLoad();
-            minDailyLoad.setDays(EnumSet.range(DayOfWeek.MONDAY, DayOfWeek.THURSDAY));
-            minDailyLoad.setMinPeriodsPerDay(3);
+            for (DayOfWeek day : EnumSet.range(DayOfWeek.MONDAY, DayOfWeek.THURSDAY)) {
+                minDailyLoad.getMinPeriodsPerDay().put(day, 3);
+            }
+            minDailyLoad.getMinPeriodsPerDay().put(DayOfWeek.FRIDAY, 2);
             SectionFreeDays freeDays = new SectionFreeDays();
             freeDays.setHowManyDays(1);
             SectionDayOff fridayOff = new SectionDayOff();
@@ -84,11 +87,12 @@ class PreferencesTest extends DatabaseTestBase {
             assertThat(preferences).allSatisfy(preference -> assertThat(preference.getWeight()).isEqualTo(3));
 
             SectionOffBy offBy = only(preferences, SectionOffBy.class);
-            assertThat(offBy.getDays()).containsExactlyInAnyOrder(DayOfWeek.MONDAY, DayOfWeek.THURSDAY);
-            assertThat(offBy.getTime()).isEqualTo(LocalTime.of(13, 0));
+            assertThat(offBy.getOffByPerDay()).containsExactlyInAnyOrderEntriesOf(
+                    Map.of(DayOfWeek.MONDAY, LocalTime.of(15, 0), DayOfWeek.THURSDAY, LocalTime.of(13, 0)));
             SectionMinDailyLoad minDailyLoad = only(preferences, SectionMinDailyLoad.class);
-            assertThat(minDailyLoad.getDays()).hasSize(4).doesNotContain(DayOfWeek.FRIDAY);
-            assertThat(minDailyLoad.getMinPeriodsPerDay()).isEqualTo(3);
+            assertThat(minDailyLoad.getMinPeriodsPerDay()).hasSize(5)
+                    .containsEntry(DayOfWeek.MONDAY, 3)
+                    .containsEntry(DayOfWeek.FRIDAY, 2);
             assertThat(only(preferences, SectionFreeDays.class).getHowManyDays()).isEqualTo(1);
             assertThat(only(preferences, SectionDayOff.class).getDay()).isEqualTo(DayOfWeek.FRIDAY);
             only(preferences, SectionNoIdlePeriods.class);
