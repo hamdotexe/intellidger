@@ -17,6 +17,16 @@ project for Software Construction (BESE-30, MCS NUST).
 - **Instructors:** one per offering (a course's theory or its lab for a section), chosen from its priority list.
   Equal priority means equally possible, a single entry means fixed, and an unlisted teacher is impossible. Lab
   engineers are teachers, the same in every way.
+- **Labs:** a lab has an instructor and a lab engineer ("Dr Rabia Khan / LE Shehla Farooq"). Its sessions need the
+  lab engineer free for all of them; the instructor too only when the term says instructors attend labs.
+- **Batches and electives:** a batch (BESE-30) has regular sections (BESE-30-A, -B, -C). An elective is offered to
+  the whole batch, never to some of its sections: it runs as one or more elective sections in a term (IoT-1, IoT-2,
+  Quantum-1), each drawing students from every regular section of the batch. While an elective section meets, none
+  of its batch's regular sections can. Sections of the same elective may meet at the same time; sections of
+  different electives only when the term says electives are mutually exclusive (each student takes just one).
+- **Term preferences** are rules a term sets for itself, each a required true or false with no default: whether
+  instructors attend labs, and whether electives are mutually exclusive. Unlike section and teacher preferences, they
+  carry no weight.
 - **Rooms:**
   - Any room by default.
   - Listed rooms are preferred by priority, and impossible rooms are never used.
@@ -30,8 +40,7 @@ project for Software Construction (BESE-30, MCS NUST).
 - **Preferences:** each preference is a row with an owner (a section or a teacher), a term and its own weight, and each
   kind is its own class. A timetable's score is separate: output stored with a saved timetable, never an input. There
   are no global weights.
-- **Not now:** ignore STI, assume no combined classes, and leave electives for later (they'll become an offering
-  subtype).
+- **Not now:** ignore STI, and assume no combined classes.
 
 ## Build and run
 
