@@ -1,6 +1,7 @@
 package io.mcs.intellidger.entities;
 
 import io.mcs.intellidger.DatabaseTestBase;
+import io.mcs.intellidger.entities.batches.Batch;
 import io.mcs.intellidger.entities.preferences.LoadRange;
 import io.mcs.intellidger.entities.preferences.sections.SectionDailyLoad;
 import io.mcs.intellidger.entities.preferences.sections.SectionDayOff;
@@ -11,7 +12,7 @@ import io.mcs.intellidger.entities.preferences.sections.SectionPreference;
 import io.mcs.intellidger.entities.preferences.teachers.TeacherPeriodsInARow;
 import io.mcs.intellidger.entities.preferences.teachers.TeacherPreference;
 import io.mcs.intellidger.entities.preferences.teachers.TeacherWeeklyLoad;
-import io.mcs.intellidger.entities.sections.Section;
+import io.mcs.intellidger.entities.sections.RegularSection;
 import io.mcs.intellidger.entities.teachers.Teacher;
 import io.mcs.intellidger.entities.terms.Term;
 import jakarta.persistence.EntityManager;
@@ -45,7 +46,11 @@ class PreferencesTest extends DatabaseTestBase {
     void aSectionsPreferencesComeBackAsTheirKinds() {
         UUID sectionId = transaction.execute(status -> {
             Term term = term("Fall 2026");
-            Section section = new Section();
+            Batch batch = new Batch();
+            batch.setName("BESE-27");
+            entityManager.persist(batch);
+            RegularSection section = new RegularSection();
+            section.setBatch(batch);
             section.setName("BESE-27-A");
             entityManager.persist(section);
 
@@ -137,6 +142,8 @@ class PreferencesTest extends DatabaseTestBase {
     private Term term(String name) {
         Term term = new Term();
         term.setName(name);
+        term.setInstructorsAttendLabs(false);
+        term.setElectivesMutuallyExclusive(true);
         entityManager.persist(term);
         return term;
     }

@@ -1,6 +1,7 @@
 package io.mcs.intellidger.entities;
 
 import io.mcs.intellidger.DatabaseTestBase;
+import io.mcs.intellidger.entities.batches.Batch;
 import io.mcs.intellidger.entities.courses.Course;
 import io.mcs.intellidger.entities.offerings.InstructorPriority;
 import io.mcs.intellidger.entities.offerings.LabOffering;
@@ -8,7 +9,7 @@ import io.mcs.intellidger.entities.offerings.Offering;
 import io.mcs.intellidger.entities.offerings.RoomPriority;
 import io.mcs.intellidger.entities.offerings.TheoryOffering;
 import io.mcs.intellidger.entities.rooms.Room;
-import io.mcs.intellidger.entities.sections.Section;
+import io.mcs.intellidger.entities.sections.RegularSection;
 import io.mcs.intellidger.entities.teachers.Teacher;
 import io.mcs.intellidger.entities.terms.Term;
 import io.mcs.intellidger.entities.timetables.InstructorAssignment;
@@ -158,11 +159,17 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
     private Ai ai(String termName) {
         Term term = new Term();
         term.setName(termName);
+        term.setInstructorsAttendLabs(false);
+        term.setElectivesMutuallyExclusive(true);
         entityManager.persist(term);
         Course course = new Course();
         course.setName("Artificial Intelligence · " + termName);
         entityManager.persist(course);
-        Section section = new Section();
+        Batch batch = new Batch();
+        batch.setName("BESE-30 · " + termName);
+        entityManager.persist(batch);
+        RegularSection section = new RegularSection();
+        section.setBatch(batch);
         section.setName("BESE-30-C · " + termName);
         entityManager.persist(section);
 

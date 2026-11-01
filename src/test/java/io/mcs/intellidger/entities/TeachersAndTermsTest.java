@@ -9,6 +9,7 @@ import io.mcs.intellidger.entities.teachers.TeachingLoad;
 import io.mcs.intellidger.entities.terms.Term;
 import io.mcs.intellidger.entities.weekplan.Period;
 import jakarta.persistence.EntityManager;
+import jakarta.validation.ConstraintViolationException;
 import org.hibernate.envers.AuditReaderFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,8 @@ class TeachersAndTermsTest extends DatabaseTestBase {
         transaction.executeWithoutResult(status -> {
             TeachingLoad load = entityManager.find(TeachingLoad.class, loadId);
             assertThat(load.getTerm().getName()).isEqualTo("Fall 2026");
+            assertThat(load.getTerm().getInstructorsAttendLabs()).isFalse();
+            assertThat(load.getTerm().getElectivesMutuallyExclusive()).isTrue();
             assertThat(load.getTeacher().getName()).isEqualTo("Dr Abdul Razzaq");
             assertThat(load.getMaxPeriodsPerDay()).isEqualTo(4);
             assertThat(load.getMaxPeriodsPerWeek()).isEqualTo(18);
@@ -110,6 +113,17 @@ class TeachersAndTermsTest extends DatabaseTestBase {
         })).hasMessageContaining("UNIQUE constraint failed: teacher_blocks.teacher_id, teacher_blocks.period_id");
     }
 
+    @Test
+    void aTermMustSayWhetherInstructorsAttendLabs() {
+        assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
+            Term term = new Term();
+            term.setName("Spring 2028");
+            entityManager.persist(term);
+        })).rootCause()
+                .isInstanceOf(ConstraintViolationException.class)
+                .hasMessageContaining("instructorsAttendLabs");
+    }
+
     /**
      * SQLite gives no SQL state, so Spring can't tell a broken unique constraint from any other failure: the refusal
      * comes as a general error naming the column, not a {@code DataIntegrityViolationException}.
@@ -126,6 +140,8 @@ class TeachersAndTermsTest extends DatabaseTestBase {
     private Term term(String name) {
         Term term = new Term();
         term.setName(name);
+        term.setInstructorsAttendLabs(false);
+        term.setElectivesMutuallyExclusive(true);
         entityManager.persist(term);
         return term;
     }
