@@ -13,7 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Version;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -43,12 +42,6 @@ public class Period {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.NONE)
     private UUID id;
-
-    /** Null on a new row on purpose: Spring Data takes a set version to mean "already saved". */
-    @Version
-    @Column(name = "jpa_version", nullable = false)
-    @Setter(AccessLevel.NONE)
-    private Long jpaVersion;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "term_id", nullable = false, updatable = false)

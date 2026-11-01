@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -31,12 +30,6 @@ public class Teacher {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.NONE)
     private UUID id;
-
-    /** Null on a new row on purpose: Spring Data takes a set version to mean "already saved". */
-    @Version
-    @Column(name = "jpa_version", nullable = false)
-    @Setter(AccessLevel.NONE)
-    private Long jpaVersion;
 
     /**
      * As timetables print it, rank or title first, such as "Dr Abdul Razzaq" or "LE Aqsa". No two teachers share one,

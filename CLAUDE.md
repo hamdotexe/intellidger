@@ -54,31 +54,26 @@ project for Software Construction (BESE-30, MCS NUST).
 
 ## Entities
 
-**No base entity.** Every entity declares its own id and optimistic-lock version, not inherited from a shared
-superclass:
+**No base entity.** Every entity declares its own id, not inherited from a shared superclass:
 
 ```java
 @Id
 @GeneratedValue(strategy = GenerationType.UUID)
 @Setter(AccessLevel.NONE)
 private UUID id;
-
-/** Null on a new row on purpose: Spring Data takes a set version to mean "already saved". */
-@Version
-@Column(name = "jpa_version", nullable = false)
-@Setter(AccessLevel.NONE)
-private Long jpaVersion;
 ```
 
-Entities use Lombok `@Getter @Setter` on the class, so `@Setter(AccessLevel.NONE)` keeps these two read-only.
+Entities use Lombok `@Getter @Setter` on the class, so `@Setter(AccessLevel.NONE)` keeps the id read-only.
+
+The only exception is one JPA forces: in an `@Inheritance(strategy = JOINED)` hierarchy, the subclasses get the id
+from the root entity, which declares it. A `@MappedSuperclass` never carries it; each entity that extends it does.
+
+**No `@Version`.** Intellidger has one user, one database and one connection: no row is ever written behind anyone's
+back, so there is nothing for an optimistic-lock version to guard.
 
 **Numbers are `Integer` with `@NotNull`, never `int`.** An `int` field starts at 0 by itself, so a value nobody set
 would save as 0 without a word; an `Integer` starts at null and `@NotNull` refuses it. A default, when there is one,
 is written out. Each number's name also says what it counts: `maxPeriodsPerDay`, never `maxPerDay`.
-
-The only exception is one JPA forces: in an `@Inheritance(strategy = JOINED)` hierarchy, the subclasses get the id
-and version from the root entity, which declares them. A `@MappedSuperclass` never carries them; each entity that
-extends it does.
 
 - The schema belongs to Flyway (`src/main/resources/db/migration`), and Hibernate only validates against it
   (`ddl-auto=validate`). Every entity change needs a migration. Never edit a committed migration; add the next `V`.

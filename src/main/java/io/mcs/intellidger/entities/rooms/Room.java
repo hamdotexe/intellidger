@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -30,12 +29,6 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.NONE)
     private UUID id;
-
-    /** Null on a new row on purpose: Spring Data takes a set version to mean "already saved". */
-    @Version
-    @Column(name = "jpa_version", nullable = false)
-    @Setter(AccessLevel.NONE)
-    private Long jpaVersion;
 
     /** As timetables print it, such as "CR-215 IS Dept". No two rooms share one. */
     @NotBlank

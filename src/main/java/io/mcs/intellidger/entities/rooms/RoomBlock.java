@@ -1,7 +1,6 @@
 package io.mcs.intellidger.entities.rooms;
 
 import io.mcs.intellidger.entities.weekplan.Block;
-import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Entity;
@@ -15,7 +14,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,12 +36,6 @@ public abstract class RoomBlock extends Block {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Setter(AccessLevel.NONE)
     private UUID id;
-
-    /** Null on a new row on purpose: Spring Data takes a set version to mean "already saved". */
-    @Version
-    @Column(name = "jpa_version", nullable = false)
-    @Setter(AccessLevel.NONE)
-    private Long jpaVersion;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false, updatable = false)
