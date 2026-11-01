@@ -21,7 +21,8 @@ project for Software Construction (BESE-30, MCS NUST).
   - Any room by default.
   - Listed rooms are preferred by priority, and impossible rooms are never used.
   - "Only these rooms" makes every unlisted room impossible.
-  - The room must hold the section.
+  - A room takes one section at a time; the few set to take more (2 or 3) take up to that many in the same period.
+    Student numbers are not kept: not for sections, not for rooms.
 - **Courses per day:** a section never has the same course twice in one day, theory and lab included.
 - **Completeness:** every section gets all its offerings scheduled.
 - **Blocks:** a hard block is never used. A soft block may be used, at the cost of its own weight; each soft block
@@ -71,6 +72,10 @@ private Long jpaVersion;
 
 Entities use Lombok `@Getter @Setter` on the class, so `@Setter(AccessLevel.NONE)` keeps these two read-only.
 
+**Numbers are `Integer` with `@NotNull`, never `int`.** An `int` field starts at 0 by itself, so a value nobody set
+would save as 0 without a word; an `Integer` starts at null and `@NotNull` refuses it. A default, when there is one,
+is written out. Each number's name also says what it counts: `maxPeriodsPerDay`, never `maxPerDay`.
+
 The only exception is one JPA forces: in an `@Inheritance(strategy = JOINED)` hierarchy, the subclasses get the id
 and version from the root entity, which declares them. A `@MappedSuperclass` never carries them; each entity that
 extends it does.
@@ -84,6 +89,7 @@ extends it does.
   leaves foreign keys out, so the migration declares them inline.
 - **An audited `@ElementCollection` of embeddables needs an `@OrderColumn`.** Without one, Envers keys its audit rows
   by owner and revision only, and two elements saved together collide.
-- **Days of the week** that a row applies on go in one column through `DaysOfWeekConverter` ("MONDAY,THURSDAY").
+- **Days of the week** that a row applies on are an `@ElementCollection` of `DayOfWeek`, stored by name in a
+  `<kind>_days` table of their own. Never pack them into one column with a converter.
 - SQLite notes: UUIDs are stored as 36-character text, foreign keys are on, and the app uses one connection because
   SQLite allows one writer at a time.
