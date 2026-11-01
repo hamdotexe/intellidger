@@ -3,11 +3,10 @@ package io.mcs.intellidger.entities;
 import io.mcs.intellidger.DatabaseTestBase;
 import io.mcs.intellidger.entities.courses.Course;
 import io.mcs.intellidger.entities.offerings.InstructorPriority;
-import io.mcs.intellidger.entities.offerings.OfferedLab;
-import io.mcs.intellidger.entities.offerings.OfferedTheory;
+import io.mcs.intellidger.entities.offerings.LabOffering;
 import io.mcs.intellidger.entities.offerings.Offering;
-import io.mcs.intellidger.entities.offerings.OfferingPart;
 import io.mcs.intellidger.entities.offerings.RoomPriority;
+import io.mcs.intellidger.entities.offerings.TheoryOffering;
 import io.mcs.intellidger.entities.rooms.Room;
 import io.mcs.intellidger.entities.sections.Section;
 import io.mcs.intellidger.entities.teachers.Teacher;
@@ -21,6 +20,7 @@ import io.mcs.intellidger.entities.timetables.TimetableVersion;
 import io.mcs.intellidger.entities.weekplan.Period;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.ConstraintViolationException;
+import org.hibernate.Hibernate;
 import org.hibernate.envers.AuditReaderFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,8 +37,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Artificial Intelligence for BESE-30-C, as the department taught it in Fall 2026: a 2+1 theory open to two equal
- * instructors, and a lab of 3 only in the Programming Lab with its lab engineer. It goes into SQLite and comes back as
- * entered, its lists in order and audited; and a timetable placing it, draft or saved, does too.
+ * instructors, and a lab of 3 only in the Programming Lab with its lab engineer, each an offering of its own. They go
+ * into SQLite and come back as entered, their lists in order and audited; and a timetable placing the lab, draft or
+ * saved, does too.
  */
 class OfferingsAndTimetablesTest extends DatabaseTestBase {
 
@@ -49,16 +50,16 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
     TransactionTemplate transaction;
 
     @Test
-    void anOfferingWithATheoryAndALabComesBackAsEntered() {
-        UUID offeringId = transaction.execute(status -> offering("Fall 2026").getId());
+    void aTheoryAndALabComeBackAsEntered() {
+        UUID[] ids = transaction.execute(status -> {
+            Ai ai = ai("Fall 2026");
+            return new UUID[] {ai.theory().getId(), ai.lab().getId()};
+        });
 
         transaction.executeWithoutResult(status -> {
-            Offering offering = entityManager.find(Offering.class, offeringId);
-            assertThat(offering.getCourse().getName()).startsWith("Artificial Intelligence");
-            assertThat(offering.getSection().getName()).startsWith("BESE-30-C");
-            assertThat(offering.getParts()).hasSize(2);
-
-            OfferedTheory theory = part(offering, OfferedTheory.class);
+            TheoryOffering theory = entityManager.find(TheoryOffering.class, ids[0]);
+            assertThat(theory.getCourse().getName()).startsWith("Artificial Intelligence");
+            assertThat(theory.getSection().getName()).startsWith("BESE-30-C");
             assertThat(theory.getSessionLengthsInPeriods()).containsExactly(2, 1);
             assertThat(theory.getInstructors()).hasSize(2);
             assertThat(theory.getInstructors().get(0).getTeacher().getName()).startsWith("Lt Col Khawir");
@@ -67,7 +68,8 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
             assertThat(theory.getImpossibleRooms()).hasSize(1);
             assertThat(theory.getImpossibleRooms().iterator().next().getName()).startsWith("CR-35");
 
-            OfferedLab lab = part(offering, OfferedLab.class);
+            LabOffering lab = entityManager.find(LabOffering.class, ids[1]);
+            assertThat(lab.getCourse().getId()).isEqualTo(theory.getCourse().getId());
             assertThat(lab.getSessionLengthsInPeriods()).containsExactly(3);
             assertThat(lab.getInstructors().get(0).getTeacher().getName()).startsWith("Dr Rabia Khan");
             assertThat(lab.getLabEngineers().get(0).getTeacher().getName()).startsWith("LE Shehla Farooq");
@@ -75,18 +77,29 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
             assertThat(lab.getRooms().get(0).getRoom().getName()).startsWith("Programming Lab");
             assertThat(lab.getRooms().get(0).getRoom().getMaxSectionsAtOnce()).isEqualTo(1);
 
-            assertThat(AuditReaderFactory.get(entityManager).getRevisions(OfferedTheory.class, theory.getId()))
+            assertThat(AuditReaderFactory.get(entityManager).getRevisions(TheoryOffering.class, theory.getId()))
                     .hasSize(1);
         });
     }
 
     @Test
-    void onlyTheseRoomsWithNoRoomListedIsRefused() {
+    void aSectionHasAtMostOneTheoryOfACourseInATerm() {
         assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
-            Offering offering = offering("Spring 2027");
-            OfferedLab lab = part(offering, OfferedLab.class);
-            lab.getRooms().clear();
-        })).rootCause()
+            TheoryOffering theory = ai("Summer 2027").theory();
+            TheoryOffering again = new TheoryOffering();
+            again.setTerm(theory.getTerm());
+            again.setCourse(theory.getCourse());
+            again.setSection(theory.getSection());
+            again.getSessionLengthsInPeriods().add(3);
+            again.getInstructors().add(instructor(theory.getInstructors().get(0).getTeacher(), 1));
+            entityManager.persist(again);
+        })).hasMessageContaining("UNIQUE constraint failed: offerings.term_id, offerings.course_id");
+    }
+
+    @Test
+    void onlyTheseRoomsWithNoRoomListedIsRefused() {
+        assertThatThrownBy(() -> transaction.executeWithoutResult(status -> ai("Spring 2027").lab().getRooms().clear()))
+                .rootCause()
                 .isInstanceOf(ConstraintViolationException.class)
                 .hasMessageContaining("at least one room must be listed");
     }
@@ -94,18 +107,16 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
     @Test
     void aDraftAndASavedVersionComeBackWithTheirSessionsAndTeachers() {
         UUID[] ids = transaction.execute(status -> {
-            Offering offering = offering("Fall 2027");
-            OfferedLab lab = part(offering, OfferedLab.class);
-            Period monday5th = period(offering.getTerm(), DayOfWeek.MONDAY, 5, LocalTime.of(12, 15),
-                    LocalTime.of(13, 5));
+            LabOffering lab = ai("Fall 2027").lab();
+            Period monday5th = period(lab.getTerm(), DayOfWeek.MONDAY, 5, LocalTime.of(12, 15), LocalTime.of(13, 5));
 
             TimetableDraft draft = new TimetableDraft();
-            draft.setTerm(offering.getTerm());
+            draft.setTerm(lab.getTerm());
             placeLab(draft, lab, monday5th);
             entityManager.persist(draft);
 
             TimetableVersion version = new TimetableVersion();
-            version.setTerm(offering.getTerm());
+            version.setTerm(lab.getTerm());
             version.setLabel("Final");
             version.setSavedAt(Instant.parse("2026-11-19T09:00:00Z"));
             version.setHardScore(0);
@@ -119,6 +130,7 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
             Timetable draft = entityManager.find(Timetable.class, ids[0]);
             assertThat(draft).isInstanceOf(TimetableDraft.class);
             Session session = draft.getSessions().get(0);
+            assertThat(Hibernate.unproxy(session.getOffering())).isInstanceOf(LabOffering.class);
             assertThat(session.getLengthInPeriods()).isEqualTo(3);
             assertThat(session.getStartPeriod().getNumber()).isEqualTo(5);
             assertThat(session.getRoom().getName()).startsWith("Programming Lab");
@@ -135,11 +147,15 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
         });
     }
 
+    /** AI's theory and its lab for BESE-30-C. */
+    private record Ai(TheoryOffering theory, LabOffering lab) {
+    }
+
     /**
-     * AI for BESE-30-C, every part filled in as the department would, saved in a term of the given name. Each test
-     * makes its own, so every name carries the term's to stay unique in the class's one database.
+     * AI for BESE-30-C, its theory and its lab filled in as the department would, saved in a term of the given name.
+     * Each test makes its own, so every name carries the term's to stay unique in the class's one database.
      */
-    private Offering offering(String termName) {
+    private Ai ai(String termName) {
         Term term = new Term();
         term.setName(termName);
         entityManager.persist(term);
@@ -150,13 +166,13 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
         section.setName("BESE-30-C · " + termName);
         entityManager.persist(section);
 
-        OfferedTheory theory = new OfferedTheory();
+        TheoryOffering theory = new TheoryOffering();
         theory.getSessionLengthsInPeriods().addAll(List.of(2, 1));
         theory.getInstructors().add(instructor(teacher("Lt Col Khawir", termName), 1));
         theory.getInstructors().add(instructor(teacher("Dr Abdul Razzaq", termName), 1));
         theory.getImpossibleRooms().add(room("CR-35", termName));
 
-        OfferedLab lab = new OfferedLab();
+        LabOffering lab = new LabOffering();
         lab.getSessionLengthsInPeriods().add(3);
         lab.getInstructors().add(instructor(teacher("Dr Rabia Khan", termName), 1));
         lab.getLabEngineers().add(instructor(teacher("LE Shehla Farooq", termName), 1));
@@ -166,23 +182,20 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
         lab.getRooms().add(programmingLab);
         lab.setOnlyListedRooms(true);
 
-        Offering offering = new Offering();
-        offering.setTerm(term);
-        offering.setCourse(course);
-        offering.setSection(section);
-        for (OfferingPart part : List.of(theory, lab)) {
-            part.setOffering(offering);
-            offering.getParts().add(part);
+        for (Offering offering : List.of(theory, lab)) {
+            offering.setTerm(term);
+            offering.setCourse(course);
+            offering.setSection(section);
+            entityManager.persist(offering);
         }
-        entityManager.persist(offering);
-        return offering;
+        return new Ai(theory, lab);
     }
 
     /** The AI lab placed and locked from the given period, taught by its first instructor and lab engineer. */
-    private void placeLab(Timetable timetable, OfferedLab lab, Period start) {
+    private void placeLab(Timetable timetable, LabOffering lab, Period start) {
         Session session = new Session();
         session.setTimetable(timetable);
-        session.setPart(lab);
+        session.setOffering(lab);
         session.setLengthInPeriods(3);
         session.setStartPeriod(start);
         session.setRoom(lab.getRooms().get(0).getRoom());
@@ -190,22 +203,14 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
         timetable.getSessions().add(session);
         InstructorAssignment instructor = new InstructorAssignment();
         instructor.setTimetable(timetable);
-        instructor.setPart(lab);
+        instructor.setOffering(lab);
         instructor.setTeacher(lab.getInstructors().get(0).getTeacher());
         timetable.getInstructorAssignments().add(instructor);
         LabEngineerAssignment labEngineer = new LabEngineerAssignment();
         labEngineer.setTimetable(timetable);
-        labEngineer.setLab(lab);
+        labEngineer.setOffering(lab);
         labEngineer.setTeacher(lab.getLabEngineers().get(0).getTeacher());
         timetable.getLabEngineerAssignments().add(labEngineer);
-    }
-
-    private static <P extends OfferingPart> P part(Offering offering, Class<P> kind) {
-        return offering.getParts().stream()
-                .filter(part -> kind.isInstance(part))
-                .map(part -> kind.cast(part))
-                .findFirst()
-                .orElseThrow();
     }
 
     private Teacher teacher(String name, String termName) {
