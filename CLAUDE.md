@@ -15,8 +15,9 @@ project for Software Construction (BESE-30, MCS NUST).
   stays 2, never 1+1. A lab's 3 stays one session of 3 periods in a row. The solver places sessions; it never
   re-splits or merges them.
 - **Instructors:** one per offering (a course's theory or its lab for a section), chosen from its priority list.
-  Equal priority means equally possible, a single entry means fixed, and an unlisted teacher is impossible. Lab
-  engineers are teachers, the same in every way.
+  Equal priority means equally possible, a single entry means fixed, and an unlisted teacher is impossible. Each
+  step below the first priority costs the offering's own instructor preference weight. Lab engineers are teachers,
+  the same in every way, with the lab offering's lab engineer preference weight.
 - **Labs:** a lab has an instructor and a lab engineer ("Dr Rabia Khan / LE Shehla Farooq"). Its sessions need the
   lab engineer free for all of them; the instructor too only when the term says instructors attend labs.
 - **Batches and electives:** a batch (BESE-30) has regular sections (BESE-30-A, -B, -C). An elective is offered to
@@ -29,7 +30,8 @@ project for Software Construction (BESE-30, MCS NUST).
   carry no weight.
 - **Rooms:**
   - Any room by default.
-  - Listed rooms are preferred by priority, and impossible rooms are never used.
+  - Listed rooms are preferred by priority: each step below the first costs the offering's room preference weight,
+    for each session, an unlisted room standing one below the last listed. Impossible rooms are never used.
   - "Only these rooms" makes every unlisted room impossible.
   - A room takes one section at a time; the few set to take more (2 or 3) take up to that many in the same period.
     Student numbers are not kept: not for sections, not for rooms.
@@ -43,6 +45,9 @@ project for Software Construction (BESE-30, MCS NUST).
 - **Preferences:** each preference is a row with an owner (a section or a teacher), a term and its own weight, and each
   kind is its own class. A timetable's score is separate: output stored with a saved timetable, never an input. There
   are no global weights.
+- **A soft rule's weight lives where the rule does,** named as a preference: a soft block's on the block, an
+  offering's priority weights on the offering, a wish's on its preference row. Never a separate row that, left out,
+  would silently switch the rule off.
 - **Not now:** ignore STI, and assume no combined classes.
 
 ## Build and run
