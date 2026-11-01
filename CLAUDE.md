@@ -11,12 +11,12 @@ project for Software Construction (BESE-30, MCS NUST).
 - **Consecutive means next to each other in the day.** Periods are consecutive whatever break lies between them:
   lunch, Zuhr prayer, or a 5–15 minute gap. **Only a free period breaks a run.** This holds for a session's own
   periods and for every rule or preference that counts periods in a row.
-- **Session lengths are fixed per offering part, exactly as entered.** A 2+1 stays 2+1, never 1+1+1 and never 3. A 2
+- **Session lengths are fixed per offering, exactly as entered.** A 2+1 stays 2+1, never 1+1+1 and never 3. A 2
   stays 2, never 1+1. A lab's 3 stays one session of 3 periods in a row. The solver places sessions; it never
   re-splits or merges them.
-- **Instructors:** one per offering part per section, chosen from the part's priority list. Equal priority means
-  equally possible, a single entry means fixed, and an unlisted teacher is impossible. Lab engineers are teachers, the
-  same in every way.
+- **Instructors:** one per offering (a course's theory or its lab for a section), chosen from its priority list.
+  Equal priority means equally possible, a single entry means fixed, and an unlisted teacher is impossible. Lab
+  engineers are teachers, the same in every way.
 - **Rooms:**
   - Any room by default.
   - Listed rooms are preferred by priority, and impossible rooms are never used.
