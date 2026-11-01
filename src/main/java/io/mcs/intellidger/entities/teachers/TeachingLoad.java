@@ -22,8 +22,8 @@ import java.util.UUID;
 
 /**
  * The most a teacher may teach in a term, in periods, a day and a week; no timetable passes either. Every period of a
- * session counts, a lab's three like any three others, for its instructor and its lab engineer alike. How much they'd
- * like to teach is among their preferences.
+ * session counts, a lab's three like any three others: always for its lab engineer, and for its instructor when the
+ * term says labs count as instructor load. How much they'd like to teach is among their preferences.
  */
 @Entity
 @Audited

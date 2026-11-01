@@ -47,6 +47,16 @@ public class Term {
     private Boolean instructorsAttendLabs;
 
     /**
+     * A term preference, set for every term: whether a lab's periods count toward its instructor's teaching load, as
+     * they always do toward its lab engineer's. Keeping a lab's time free and teaching in it are two things, so an
+     * instructor who attends labs may or may not have them count. One who doesn't attend never does: true while
+     * instructors don't attend labs is refused when saved.
+     */
+    @NotNull
+    @Column(name = "labs_count_as_instructor_load", nullable = false)
+    private Boolean labsCountAsInstructorLoad;
+
+    /**
      * A term preference, set for every term: whether each student takes just one of their batch's electives. When
      * true, sections of different electives may meet at the same time; when false, they never do.
      */

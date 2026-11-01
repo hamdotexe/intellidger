@@ -51,6 +51,7 @@ final class SavedTerm {
         Term term = new Term();
         term.setName("Fall 2026");
         term.setInstructorsAttendLabs(false);
+        term.setLabsCountAsInstructorLoad(false);
         term.setElectivesMutuallyExclusive(true);
         entityManager.persist(term);
 

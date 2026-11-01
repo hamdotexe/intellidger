@@ -163,6 +163,7 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
         Term term = new Term();
         term.setName(termName);
         term.setInstructorsAttendLabs(false);
+        term.setLabsCountAsInstructorLoad(false);
         term.setElectivesMutuallyExclusive(true);
         entityManager.persist(term);
         Course course = new Course();

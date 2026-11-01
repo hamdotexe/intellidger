@@ -141,6 +141,7 @@ class TeachersAndTermsTest extends DatabaseTestBase {
         Term term = new Term();
         term.setName(name);
         term.setInstructorsAttendLabs(false);
+        term.setLabsCountAsInstructorLoad(false);
         term.setElectivesMutuallyExclusive(true);
         entityManager.persist(term);
         return term;

@@ -100,7 +100,7 @@ class TimetableTest {
         locked.setLocked(true);
 
         Timetable timetable = new Timetable();
-        timetable.setTerm(new Term(false, true));
+        timetable.setTerm(new Term(false, false, true));
         timetable.setPeriods(periods);
         timetable.setRooms(rooms);
         timetable.setTeachers(List.of(khawir, rabia, shehla));

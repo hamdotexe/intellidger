@@ -19,15 +19,18 @@ project for Software Construction (BESE-30, MCS NUST).
   step below the first priority costs the offering's own instructor preference weight. Lab engineers are teachers,
   the same in every way, with the lab offering's lab engineer preference weight.
 - **Labs:** a lab has an instructor and a lab engineer ("Dr Rabia Khan / LE Shehla Farooq"). Its sessions need the
-  lab engineer free for all of them; the instructor too only when the term says instructors attend labs.
+  lab engineer free for all of them; the instructor too only when the term says instructors attend labs. A lab's
+  periods always count toward its lab engineer's teaching load, and toward its instructor's only when the term says
+  labs count as instructor load, which it can say only while instructors attend labs: being kept free for a lab and
+  teaching in it are two different things.
 - **Batches and electives:** a batch (BESE-30) has regular sections (BESE-30-A, -B, -C). An elective is offered to
   the whole batch, never to some of its sections: it runs as one or more elective sections in a term (IoT-1, IoT-2,
   Quantum-1), each drawing students from every regular section of the batch. While an elective section meets, none
   of its batch's regular sections can. Sections of the same elective may meet at the same time; sections of
   different electives only when the term says electives are mutually exclusive (each student takes just one).
 - **Term preferences** are rules a term sets for itself, each a required true or false with no default: whether
-  instructors attend labs, and whether electives are mutually exclusive. Unlike section and teacher preferences, they
-  carry no weight.
+  instructors attend labs, whether labs count as instructor load (refused as true while instructors don't attend
+  labs), and whether electives are mutually exclusive. Unlike section and teacher preferences, they carry no weight.
 - **Rooms:**
   - Any room by default.
   - Listed rooms are preferred by priority: each step below the first costs the offering's room preference weight,

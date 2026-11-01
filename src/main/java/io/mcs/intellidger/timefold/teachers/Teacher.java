@@ -7,7 +7,6 @@ import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import ai.timefold.solver.core.api.score.stream.Joiners;
 import ai.timefold.solver.core.api.score.stream.bi.BiConstraintStream;
 import io.mcs.intellidger.repositories.teachers.TeacherRepository;
-import io.mcs.intellidger.timefold.offerings.TheoryOffering;
 import io.mcs.intellidger.timefold.terms.Term;
 import io.mcs.intellidger.timefold.timetables.InstructorAssignment;
 import io.mcs.intellidger.timefold.timetables.LabEngineerAssignment;
@@ -45,16 +44,21 @@ public class Teacher {
                 .join(Session.class,
                         Joiners.equal(assignment -> assignment.getOffering(), session -> session.getOffering()))
                 .ifExists(Term.class, Joiners.filtering((assignment, session, term) ->
-                        session.getOffering() instanceof TheoryOffering || term.isInstructorsAttendLabs()))
+                        term.keepsInstructorBusy(session.getOffering())))
                 .map((assignment, session) -> assignment.getTeacher(), (assignment, session) -> session)
                 .concat(labEngineered(factory));
     }
 
-    /** Each session a teacher teaches, as their load counts it: a lab for its instructor and lab engineer alike. */
+    /**
+     * Each session that counts toward a teacher's load: every session of the labs they are lab engineer of, and of the
+     * offerings they teach, but a lab's instructor only when the term says labs count as instructor load.
+     */
     public static BiConstraintStream<Teacher, Session> sessionsTaught(ConstraintFactory factory) {
         return factory.forEach(InstructorAssignment.class)
                 .join(Session.class,
                         Joiners.equal(assignment -> assignment.getOffering(), session -> session.getOffering()))
+                .ifExists(Term.class, Joiners.filtering((assignment, session, term) ->
+                        term.countsAsInstructorLoad(session.getOffering())))
                 .map((assignment, session) -> assignment.getTeacher(), (assignment, session) -> session)
                 .concat(labEngineered(factory));
     }
