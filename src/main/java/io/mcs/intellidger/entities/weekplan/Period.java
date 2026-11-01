@@ -60,9 +60,10 @@ public class Period {
     private DayOfWeek day;
 
     /** Its place in the day, from 1. Two periods with numbers next to each other are consecutive. */
+    @NotNull
     @Positive
     @Column(name = "number", nullable = false)
-    private int number;
+    private Integer number;
 
     @NotNull
     @Column(name = "starts_at", nullable = false)
