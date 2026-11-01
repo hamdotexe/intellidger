@@ -13,8 +13,9 @@ import org.hibernate.envers.Audited;
 import java.time.Instant;
 
 /**
- * A timetable saved under a label, which never changes: what exports and earlier choices are made from. Its score is
- * the one the solver gave it when it was saved; reopened after the inputs have changed, it is checked again.
+ * A timetable saved under a label, which never changes: what exports and earlier choices are made from. Only a
+ * timetable that breaks no hard rule is ever saved, so it keeps just its soft score, the one the solver gave it;
+ * reopened after the inputs have changed, it is checked again.
  */
 @Entity
 @Audited
@@ -32,11 +33,6 @@ public class TimetableVersion extends Timetable {
     @NotNull
     @Column(name = "saved_at", nullable = false, updatable = false)
     private Instant savedAt;
-
-    /** 0 when it breaks no hard rule; below 0 by how much it breaks them. */
-    @NotNull
-    @Column(name = "hard_score", nullable = false, updatable = false)
-    private Integer hardScore;
 
     /** 0 when every preference is met; below 0 by what the ones missed cost. */
     @NotNull
