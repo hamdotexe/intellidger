@@ -48,6 +48,11 @@ project for Software Construction (BESE-30, MCS NUST).
 - **A soft rule's weight lives where the rule does,** named as a preference: a soft block's on the block, an
   offering's priority weights on the offering, a wish's on its preference row. Never a separate row that, left out,
   would silently switch the rule off.
+- **Contradicting preferences are refused when saved,** by the services, whichever side is saved second: kinds that
+  never stand together (even days with free days, a day off or daily loads), values that can't both hold (a minimum
+  above a maximum, a minimum on a day off, a teacher's minimum above their teaching load), and a second row of a kind
+  that takes one. The full lists are in the `package-info` of `entities/preferences/sections` and `/teachers`.
+  Everything else stands together, and the weights decide.
 - **Not now:** ignore STI, and assume no combined classes.
 
 ## Build and run
