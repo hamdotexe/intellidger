@@ -1,10 +1,7 @@
 package io.mcs.intellidger.entities.teachers;
 
 import io.mcs.intellidger.entities.terms.Term;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -15,8 +12,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,8 +22,9 @@ import org.hibernate.envers.Audited;
 import java.util.UUID;
 
 /**
- * How much a teacher may teach in a term, and how much they'd like to, for a day and for a week. Every period of a
- * session counts, a lab's three like any three others, for its instructor and its lab engineer alike.
+ * The most a teacher may teach in a term, in periods, a day and a week; no timetable passes either. Every period of a
+ * session counts, a lab's three like any three others, for its instructor and its lab engineer alike. How much they'd
+ * like to teach is among their preferences.
  */
 @Entity
 @Audited
@@ -56,24 +54,12 @@ public class TeachingLoad {
     private Teacher teacher;
 
     @NotNull
-    @Valid
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "max", column = @Column(name = "max_per_day", nullable = false)),
-            @AttributeOverride(name = "preferredMin", column = @Column(name = "preferred_min_per_day", nullable = false)),
-            @AttributeOverride(name = "preferredMax", column = @Column(name = "preferred_max_per_day", nullable = false))
-    })
-    private LoadLimits perDay;
+    @PositiveOrZero
+    @Column(name = "max_periods_per_day", nullable = false)
+    private Integer maxPeriodsPerDay;
 
     @NotNull
-    @Valid
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "max", column = @Column(name = "max_per_week", nullable = false)),
-            @AttributeOverride(name = "preferredMin", column = @Column(name = "preferred_min_per_week",
-                    nullable = false)),
-            @AttributeOverride(name = "preferredMax", column = @Column(name = "preferred_max_per_week",
-                    nullable = false))
-    })
-    private LoadLimits perWeek;
+    @PositiveOrZero
+    @Column(name = "max_periods_per_week", nullable = false)
+    private Integer maxPeriodsPerWeek;
 }
