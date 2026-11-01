@@ -9,6 +9,7 @@ import ai.timefold.solver.core.api.score.HardSoftScore;
 import ai.timefold.solver.core.api.score.stream.Constraint;
 import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import io.mcs.intellidger.repositories.timetables.TimetableDraftRepository;
+import io.mcs.intellidger.repositories.timetables.TimetableVersionRepository;
 import io.mcs.intellidger.timefold.offerings.Offering;
 import io.mcs.intellidger.timefold.rooms.Room;
 import io.mcs.intellidger.timefold.weekplan.Period;
@@ -92,19 +93,28 @@ public class Session {
      * placed yet when the draft has none of that length.
      */
     public static List<Session> fetch(TimetableDraftRepository drafts, UUID termId, Timetable timetable) {
-        var unmatched = new ArrayList<>(drafts.findByTermId(termId)
-                .map(draft -> draft.getSessions())
-                .orElse(List.of()));
+        return placedAs(drafts.findByTermId(termId).map(draft -> draft.getSessions()).orElse(List.of()), timetable);
+    }
+
+    /** The term's sessions placed and locked as a saved version has them, as for the draft. */
+    public static List<Session> fetch(TimetableVersionRepository versions, UUID versionId, Timetable timetable) {
+        return placedAs(versions.findById(versionId).orElseThrow().getSessions(), timetable);
+    }
+
+    /** One session for each session length of each offering, placed and locked as a saved one of that length. */
+    private static List<Session> placedAs(List<io.mcs.intellidger.entities.timetables.Session> saved,
+            Timetable timetable) {
+        var unmatched = new ArrayList<>(saved);
         List<Session> sessions = new ArrayList<>();
         for (Offering offering : timetable.getOfferings()) {
             for (int lengthInPeriods : offering.getSessionLengthsInPeriods()) {
-                var saved = unmatched.stream()
+                var match = unmatched.stream()
                         .filter(placed -> placed.getOffering().getId().equals(offering.getId())
                                 && placed.getLengthInPeriods() == lengthInPeriods)
                         .findFirst();
-                Session session = new Session(saved.map(placed -> placed.getId()).orElseGet(() -> UUID.randomUUID()),
+                Session session = new Session(match.map(placed -> placed.getId()).orElseGet(() -> UUID.randomUUID()),
                         offering, lengthInPeriods, timetable.getPeriods(), timetable.getRooms());
-                saved.ifPresent(placed -> {
+                match.ifPresent(placed -> {
                     unmatched.remove(placed);
                     session.setStartPeriod(timetable.period(placed.getStartPeriod().getId()));
                     session.setRoom(timetable.room(placed.getRoom().getId()));

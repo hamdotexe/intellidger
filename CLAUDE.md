@@ -42,7 +42,8 @@ project for Software Construction (BESE-30, MCS NUST).
 - **Completeness:** every section gets all its offerings scheduled.
 - **No timetable that breaks a hard rule.** If generating or optimizing can't place every session of every section
   without breaking a hard rule, the run has failed: it produces no timetable, the draft stays as it was, nothing is
-  saved, and the user is told which hard rules couldn't be kept. A best attempt that breaks one is never kept.
+  saved, and the user is told it failed. A best attempt that breaks one is never kept. Which rules broke is not
+  named: that breakdown is a paid Timefold feature.
 - **Blocks:** a hard block is never used. A soft block may be used, at the cost of its own weight; each soft block
   carries one. A regular section's block (BESE-30-C's seminar) keeps its batch's elective sections out too, since
   they draw students from it.
@@ -70,6 +71,10 @@ project for Software Construction (BESE-30, MCS NUST).
 
 ## Layout
 
+- `timefold/`: the solver's copies of the tables, their rules, and `LoadProblem` and `SolveProblem`. **Timefold's free
+  edition only, never a paid (Enterprise) feature:** no `SolutionManager.analyze()` (score analysis),
+  `recommendAssignment()` or `diff()`, no multi-threaded or partitioned solving, no nearby selection. They throw
+  without a licence the project doesn't have. Scoring a whole timetable with `SolutionManager.update()` is free.
 - `ui/`: the JavaFX front. `DesktopApp` starts Spring, then the window. Each screen is an FXML controller (a
   prototype-scoped Spring bean) with its FXML in resources at the same package path. Screens call services, never
   repositories.

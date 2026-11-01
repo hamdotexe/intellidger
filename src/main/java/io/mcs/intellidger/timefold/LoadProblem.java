@@ -39,6 +39,7 @@ import io.mcs.intellidger.repositories.teachers.TeacherSoftBlockRepository;
 import io.mcs.intellidger.repositories.teachers.TeachingLoadRepository;
 import io.mcs.intellidger.repositories.terms.TermRepository;
 import io.mcs.intellidger.repositories.timetables.TimetableDraftRepository;
+import io.mcs.intellidger.repositories.timetables.TimetableVersionRepository;
 import io.mcs.intellidger.repositories.weekplan.PeriodRepository;
 import io.mcs.intellidger.timefold.batches.Batch;
 import io.mcs.intellidger.timefold.courses.Course;
@@ -91,9 +92,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * Fills a {@link Timetable} with a term's whole problem: everything it is solved against, and its draft. Each table
- * comes through its own {@code fetch}, in the order they refer to each other, since a fetch finds the rows its rows
- * point to among those already in.
+ * Fills a {@link Timetable} with a term's whole problem: everything it is solved against, and its draft or one of its
+ * saved versions. Each table comes through its own {@code fetch}, in the order they refer to each other, since a
+ * fetch finds the rows its rows point to among those already in.
  */
 @Component
 @RequiredArgsConstructor
@@ -139,13 +140,38 @@ public class LoadProblem {
     private final TeacherOffByRepository teacherOffBy;
     private final TeacherPeriodsInARowRepository teacherPeriodsInARow;
     private final TimetableDraftRepository drafts;
+    private final TimetableVersionRepository versions;
 
     /**
-     * The term's problem, ready to solve and needing the database no more. Called from a service, inside its
-     * transaction, which the fetches need to read their rows' collections.
+     * The term's problem with its draft, ready to solve and needing the database no more. Called from a service,
+     * inside its transaction, which the fetches need to read their rows' collections.
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public Timetable load(UUID termId) {
+        Timetable timetable = inputs(termId);
+        // Last, what the solver decides: one session per session length of each offering, one teacher per role, the
+        // draft's where it has them.
+        timetable.setSessions(Session.fetch(drafts, termId, timetable));
+        timetable.setInstructorAssignments(InstructorAssignment.fetch(drafts, termId, timetable));
+        timetable.setLabEngineerAssignments(LabEngineerAssignment.fetch(drafts, termId, timetable));
+        return timetable;
+    }
+
+    /**
+     * A saved version against its term as the term stands now, to be checked again: placed as the version has it,
+     * anything added to the term since not placed at all. Called from a service, inside its transaction.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Timetable loadVersion(UUID versionId) {
+        Timetable timetable = inputs(versions.findById(versionId).orElseThrow().getTerm().getId());
+        timetable.setSessions(Session.fetch(versions, versionId, timetable));
+        timetable.setInstructorAssignments(InstructorAssignment.fetch(versions, versionId, timetable));
+        timetable.setLabEngineerAssignments(LabEngineerAssignment.fetch(versions, versionId, timetable));
+        return timetable;
+    }
+
+    /** Everything the term is solved against: every list but the sessions and assignments the solver decides. */
+    private Timetable inputs(UUID termId) {
         Timetable timetable = new Timetable();
 
         // What every other row points to.
@@ -197,11 +223,6 @@ public class LoadProblem {
         timetable.setTeacherOffBy(TeacherOffBy.fetch(teacherOffBy, termId, timetable));
         timetable.setTeacherPeriodsInARow(TeacherPeriodsInARow.fetch(teacherPeriodsInARow, termId, timetable));
 
-        // Last, what the solver decides: one session per session length of each offering, one teacher per role, the
-        // draft's where it has them.
-        timetable.setSessions(Session.fetch(drafts, termId, timetable));
-        timetable.setInstructorAssignments(InstructorAssignment.fetch(drafts, termId, timetable));
-        timetable.setLabEngineerAssignments(LabEngineerAssignment.fetch(drafts, termId, timetable));
         return timetable;
     }
 }

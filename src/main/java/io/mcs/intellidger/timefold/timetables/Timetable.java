@@ -194,6 +194,16 @@ public class Timetable {
     @PlanningScore
     private HardSoftScore score;
 
+    /**
+     * Whether every session is placed and every offering has its teachers. One that isn't is never kept, whatever its
+     * score, since a session not placed breaks no rule and costs nothing.
+     */
+    public boolean isComplete() {
+        return sessions.stream().allMatch(session -> session.getStartPeriod() != null && session.getRoom() != null)
+                && instructorAssignments.stream().allMatch(assignment -> assignment.getTeacher() != null)
+                && labEngineerAssignments.stream().allMatch(assignment -> assignment.getTeacher() != null);
+    }
+
     /** Every offering, theory and lab. */
     public List<Offering> getOfferings() {
         return Stream.<Offering>concat(theoryOfferings.stream(), labOfferings.stream()).toList();

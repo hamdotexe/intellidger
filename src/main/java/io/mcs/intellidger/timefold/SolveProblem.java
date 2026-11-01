@@ -77,24 +77,39 @@ public class SolveProblem {
         solverManager.terminateEarly(termId);
     }
 
-    /** Judges how a run ended: saves a timetable that breaks no hard rule, and names the broken ones otherwise. */
+    /**
+     * The term's draft as it stands, scored without moving anything: what it breaks and costs in all, and through
+     * {@link Timetable#isComplete()} whether every session is placed, since one that isn't counts for nothing.
+     */
+    @Transactional(readOnly = true)
+    public Timetable checkDraft(UUID termId) {
+        Timetable draft = loadProblem.load(termId);
+        solutionManager.update(draft);
+        return draft;
+    }
+
+    /** A saved version against its term as the term stands now, scored without moving anything, as for the draft. */
+    @Transactional(readOnly = true)
+    public Timetable checkVersion(UUID versionId) {
+        Timetable version = loadProblem.loadVersion(versionId);
+        solutionManager.update(version);
+        return version;
+    }
+
+    /** Judges how a run ended: saves a complete timetable that breaks no hard rule, and says why not otherwise. */
     private void finish(UUID termId, Timetable solved, Consumer<HardSoftScore> onSaved,
             Consumer<List<String>> onFailed) {
-        var analysis = solutionManager.analyze(solved);
-        if (!analysis.isSolutionInitialized()) {
+        if (!solved.isComplete()) {
             onFailed.accept(List.of("Stopped before every session was placed"));
             return;
         }
-        List<String> broken = analysis.constraintAnalyses().stream()
-                .filter(constraint -> constraint.score().hardScore() < 0)
-                .map(constraint -> constraint.constraintRef().id() + " (" + constraint.matchCount() + ")")
-                .toList();
-        if (!broken.isEmpty()) {
-            onFailed.accept(broken);
+        HardSoftScore score = solved.getScore();
+        if (!score.isFeasible()) {
+            onFailed.accept(List.of("Breaks hard rules, scoring " + score.hardScore() + " on them"));
             return;
         }
         transactions.executeWithoutResult(_ -> save(termId, solved));
-        onSaved.accept(analysis.score());
+        onSaved.accept(score);
     }
 
     /** Writes the solved timetable into the term's draft, making the draft on its first run. */

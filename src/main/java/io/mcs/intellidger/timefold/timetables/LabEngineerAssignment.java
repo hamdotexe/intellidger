@@ -8,6 +8,7 @@ import ai.timefold.solver.core.api.score.HardSoftScore;
 import ai.timefold.solver.core.api.score.stream.Constraint;
 import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
 import io.mcs.intellidger.repositories.timetables.TimetableDraftRepository;
+import io.mcs.intellidger.repositories.timetables.TimetableVersionRepository;
 import io.mcs.intellidger.timefold.offerings.LabOffering;
 import io.mcs.intellidger.timefold.teachers.Teacher;
 import lombok.AccessLevel;
@@ -49,9 +50,19 @@ public class LabEngineerAssignment {
     /** Each lab offering's lab engineer: the draft's while still listed, otherwise none yet. */
     public static List<LabEngineerAssignment> fetch(TimetableDraftRepository drafts, UUID termId,
             Timetable timetable) {
-        var saved = drafts.findByTermId(termId)
-                .map(draft -> draft.getLabEngineerAssignments())
-                .orElse(List.of());
+        return assignedAs(drafts.findByTermId(termId).map(draft -> draft.getLabEngineerAssignments())
+                .orElse(List.of()), timetable);
+    }
+
+    /** Each lab offering's lab engineer as a saved version has it, as for the draft. */
+    public static List<LabEngineerAssignment> fetch(TimetableVersionRepository versions, UUID versionId,
+            Timetable timetable) {
+        return assignedAs(versions.findById(versionId).orElseThrow().getLabEngineerAssignments(), timetable);
+    }
+
+    /** Each lab offering's lab engineer: the saved one's while still listed, otherwise none yet. */
+    private static List<LabEngineerAssignment> assignedAs(
+            List<io.mcs.intellidger.entities.timetables.LabEngineerAssignment> saved, Timetable timetable) {
         return timetable.getLabOfferings().stream()
                 .map(offering -> {
                     var found = saved.stream()
