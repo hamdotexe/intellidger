@@ -2,16 +2,16 @@ package io.mcs.intellidger.entities;
 
 import io.mcs.intellidger.DatabaseTestBase;
 import io.mcs.intellidger.entities.batches.Batch;
-import io.mcs.intellidger.entities.preferences.LoadRange;
-import io.mcs.intellidger.entities.preferences.sections.SectionDailyLoad;
 import io.mcs.intellidger.entities.preferences.sections.SectionDayOff;
 import io.mcs.intellidger.entities.preferences.sections.SectionFreeDays;
+import io.mcs.intellidger.entities.preferences.sections.SectionMinDailyLoad;
 import io.mcs.intellidger.entities.preferences.sections.SectionNoIdlePeriods;
 import io.mcs.intellidger.entities.preferences.sections.SectionOffBy;
 import io.mcs.intellidger.entities.preferences.sections.SectionPreference;
+import io.mcs.intellidger.entities.preferences.teachers.TeacherMaxWeeklyLoad;
+import io.mcs.intellidger.entities.preferences.teachers.TeacherMinWeeklyLoad;
 import io.mcs.intellidger.entities.preferences.teachers.TeacherPeriodsInARow;
 import io.mcs.intellidger.entities.preferences.teachers.TeacherPreference;
-import io.mcs.intellidger.entities.preferences.teachers.TeacherWeeklyLoad;
 import io.mcs.intellidger.entities.sections.RegularSection;
 import io.mcs.intellidger.entities.teachers.Teacher;
 import io.mcs.intellidger.entities.terms.Term;
@@ -31,8 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * A final-year section's wishes and a teacher's go into SQLite and come back as their own kinds, days and times
- * intact; and a load range upside down is refused.
+ * A final-year section's wishes and a teacher's go into SQLite and come back as their own kinds, days, times and
+ * weights intact; and a load of no periods is refused.
  */
 class PreferencesTest extends DatabaseTestBase {
 
@@ -57,14 +57,14 @@ class PreferencesTest extends DatabaseTestBase {
             SectionOffBy offBy = new SectionOffBy();
             offBy.setDays(EnumSet.of(DayOfWeek.THURSDAY, DayOfWeek.MONDAY));
             offBy.setTime(LocalTime.of(13, 0));
-            SectionDailyLoad dailyLoad = new SectionDailyLoad();
-            dailyLoad.setDays(EnumSet.range(DayOfWeek.MONDAY, DayOfWeek.THURSDAY));
-            dailyLoad.setLoad(range(3, 6));
+            SectionMinDailyLoad minDailyLoad = new SectionMinDailyLoad();
+            minDailyLoad.setDays(EnumSet.range(DayOfWeek.MONDAY, DayOfWeek.THURSDAY));
+            minDailyLoad.setMinPeriodsPerDay(3);
             SectionFreeDays freeDays = new SectionFreeDays();
             freeDays.setHowManyDays(1);
             SectionDayOff fridayOff = new SectionDayOff();
             fridayOff.setDay(DayOfWeek.FRIDAY);
-            for (SectionPreference preference : List.of(offBy, dailyLoad, freeDays, fridayOff,
+            for (SectionPreference preference : List.of(offBy, minDailyLoad, freeDays, fridayOff,
                     new SectionNoIdlePeriods())) {
                 preference.setTerm(term);
                 preference.setSection(section);
@@ -86,10 +86,9 @@ class PreferencesTest extends DatabaseTestBase {
             SectionOffBy offBy = only(preferences, SectionOffBy.class);
             assertThat(offBy.getDays()).containsExactlyInAnyOrder(DayOfWeek.MONDAY, DayOfWeek.THURSDAY);
             assertThat(offBy.getTime()).isEqualTo(LocalTime.of(13, 0));
-            SectionDailyLoad dailyLoad = only(preferences, SectionDailyLoad.class);
-            assertThat(dailyLoad.getDays()).hasSize(4).doesNotContain(DayOfWeek.FRIDAY);
-            assertThat(dailyLoad.getLoad().getMinPeriods()).isEqualTo(3);
-            assertThat(dailyLoad.getLoad().getMaxPeriods()).isEqualTo(6);
+            SectionMinDailyLoad minDailyLoad = only(preferences, SectionMinDailyLoad.class);
+            assertThat(minDailyLoad.getDays()).hasSize(4).doesNotContain(DayOfWeek.FRIDAY);
+            assertThat(minDailyLoad.getMinPeriodsPerDay()).isEqualTo(3);
             assertThat(only(preferences, SectionFreeDays.class).getHowManyDays()).isEqualTo(1);
             assertThat(only(preferences, SectionDayOff.class).getDay()).isEqualTo(DayOfWeek.FRIDAY);
             only(preferences, SectionNoIdlePeriods.class);
@@ -101,14 +100,18 @@ class PreferencesTest extends DatabaseTestBase {
         UUID teacherId = transaction.execute(status -> {
             Term term = term("Fall 2027");
             Teacher teacher = teacher("Dr Saima Latif");
-            TeacherWeeklyLoad weeklyLoad = new TeacherWeeklyLoad();
-            weeklyLoad.setLoad(range(9, 12));
+            TeacherMinWeeklyLoad atLeast = new TeacherMinWeeklyLoad();
+            atLeast.setMinPeriodsPerWeek(9);
+            atLeast.setWeight(1);
+            TeacherMaxWeeklyLoad atMost = new TeacherMaxWeeklyLoad();
+            atMost.setMaxPeriodsPerWeek(12);
+            atMost.setWeight(4);
             TeacherPeriodsInARow periodsInARow = new TeacherPeriodsInARow();
             periodsInARow.setMaxPeriods(4);
-            for (TeacherPreference preference : List.<TeacherPreference>of(weeklyLoad, periodsInARow)) {
+            periodsInARow.setWeight(2);
+            for (TeacherPreference preference : List.<TeacherPreference>of(atLeast, atMost, periodsInARow)) {
                 preference.setTerm(term);
                 preference.setTeacher(teacher);
-                preference.setWeight(2);
                 entityManager.persist(preference);
             }
             return teacher.getId();
@@ -120,23 +123,28 @@ class PreferencesTest extends DatabaseTestBase {
                             TeacherPreference.class)
                     .setParameter("teacher", teacherId)
                     .getResultList();
-            assertThat(only(preferences, TeacherWeeklyLoad.class).getLoad().getMaxPeriods()).isEqualTo(12);
+            TeacherMinWeeklyLoad atLeast = only(preferences, TeacherMinWeeklyLoad.class);
+            assertThat(atLeast.getMinPeriodsPerWeek()).isEqualTo(9);
+            assertThat(atLeast.getWeight()).isEqualTo(1);
+            TeacherMaxWeeklyLoad atMost = only(preferences, TeacherMaxWeeklyLoad.class);
+            assertThat(atMost.getMaxPeriodsPerWeek()).isEqualTo(12);
+            assertThat(atMost.getWeight()).isEqualTo(4);
             assertThat(only(preferences, TeacherPeriodsInARow.class).getMaxPeriods()).isEqualTo(4);
         });
     }
 
     @Test
-    void aLoadWhoseMinimumIsAboveItsMaximumIsRefused() {
+    void aLoadOfNoPeriodsIsRefused() {
         assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
-            TeacherWeeklyLoad weeklyLoad = new TeacherWeeklyLoad();
-            weeklyLoad.setTerm(term("Spring 2027"));
-            weeklyLoad.setTeacher(teacher("Lec Fawad Khan"));
-            weeklyLoad.setWeight(1);
-            weeklyLoad.setLoad(range(12, 9));
-            entityManager.persist(weeklyLoad);
+            TeacherMaxWeeklyLoad atMost = new TeacherMaxWeeklyLoad();
+            atMost.setTerm(term("Spring 2027"));
+            atMost.setTeacher(teacher("Lec Fawad Khan"));
+            atMost.setWeight(1);
+            atMost.setMaxPeriodsPerWeek(0);
+            entityManager.persist(atMost);
         })).rootCause()
                 .isInstanceOf(ConstraintViolationException.class)
-                .hasMessageContaining("minimum can't be above its maximum");
+                .hasMessageContaining("maxPeriodsPerWeek");
     }
 
     private Term term(String name) {
@@ -153,13 +161,6 @@ class PreferencesTest extends DatabaseTestBase {
         teacher.setName(name);
         entityManager.persist(teacher);
         return teacher;
-    }
-
-    private static LoadRange range(int min, int max) {
-        LoadRange range = new LoadRange();
-        range.setMinPeriods(min);
-        range.setMaxPeriods(max);
-        return range;
     }
 
     private static <K> K only(List<?> preferences, Class<K> kind) {

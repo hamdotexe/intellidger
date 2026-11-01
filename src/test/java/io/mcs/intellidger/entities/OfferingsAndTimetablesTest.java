@@ -120,7 +120,6 @@ class OfferingsAndTimetablesTest extends DatabaseTestBase {
             version.setTerm(lab.getTerm());
             version.setLabel("Final");
             version.setSavedAt(Instant.parse("2026-11-19T09:00:00Z"));
-            version.setHardScore(0);
             version.setSoftScore(-12);
             placeLab(version, lab, monday5th);
             entityManager.persist(version);
