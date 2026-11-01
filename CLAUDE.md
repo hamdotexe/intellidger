@@ -78,7 +78,12 @@ project for Software Construction (BESE-30, MCS NUST).
 - `ui/`: the JavaFX front. `DesktopApp` starts Spring, then the window. Each screen is an FXML controller (a
   prototype-scoped Spring bean) with its FXML in resources at the same package path. Screens call services, never
   repositories.
-- `services/`, `repositories/`, `entities/`: by area. Each package's `package-info` says what it holds.
+- `services/`, `repositories/`, `entities/`: by area. Each package's `package-info` says what it holds. Services
+  follow laptops: `services/<area>/<action>/` (`create`, `update`, `delete`, `view`, or the area's own) holding
+  `<Thing><Action>Service`, and an area-level `<Thing>Writes` for the rules every change of it goes through. A change
+  the app won't make throws `Refused`, its message in words the screen shows as they are.
+- **Deletes never cascade.** A row other rows refer to is refused with the reason, never deleted along with them. A
+  timetable's own sessions and assignments are part of it, not references to it.
 - `shared/persistence/`: `AppDataFolder`, where the database lives.
 - `shared/audit/`: `RevisionInfo`, Envers' revision table. Entities are `@Audited`, and each audited table gets a
   `*_aud` twin in the same migration.
