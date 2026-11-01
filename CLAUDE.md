@@ -35,6 +35,9 @@ project for Software Construction (BESE-30, MCS NUST).
     Student numbers are not kept: not for sections, not for rooms.
 - **Courses per day:** a section never has the same course twice in one day, theory and lab included.
 - **Completeness:** every section gets all its offerings scheduled.
+- **No timetable that breaks a hard rule.** If generating or optimizing can't place every session of every section
+  without breaking a hard rule, the run has failed: it produces no timetable, the draft stays as it was, nothing is
+  saved, and the user is told which hard rules couldn't be kept. A best attempt that breaks one is never kept.
 - **Blocks:** a hard block is never used. A soft block may be used, at the cost of its own weight; each soft block
   carries one.
 - **Preferences:** each preference is a row with an owner (a section or a teacher), a term and its own weight, and each
