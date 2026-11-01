@@ -10,7 +10,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
 
-/** A period a section would rather not have a session: one of its sessions may use it, at the cost of its weight. */
+/**
+ * A period a section would rather not have a session: one of its sessions may use it, at the cost of its weight, and
+ * so, for a regular section, may a session of its batch's elective sections, which draw students from it.
+ */
 @Entity
 @Audited
 @DiscriminatorValue("SOFT")

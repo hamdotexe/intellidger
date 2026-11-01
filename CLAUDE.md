@@ -44,7 +44,8 @@ project for Software Construction (BESE-30, MCS NUST).
   without breaking a hard rule, the run has failed: it produces no timetable, the draft stays as it was, nothing is
   saved, and the user is told which hard rules couldn't be kept. A best attempt that breaks one is never kept.
 - **Blocks:** a hard block is never used. A soft block may be used, at the cost of its own weight; each soft block
-  carries one.
+  carries one. A regular section's block (BESE-30-C's seminar) keeps its batch's elective sections out too, since
+  they draw students from it.
 - **Preferences:** each preference is a row with an owner (a section or a teacher), a term and its own weight, and each
   kind is its own class. A timetable's score is separate: output stored with a saved timetable, never an input. There
   are no global weights.
